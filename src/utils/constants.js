@@ -1,18 +1,28 @@
-export const CANVAS_WIDTH = 960
-export const CANVAS_HEIGHT = 720
-export const ROAD_WIDTH = 56
-export const VEHICLE_LENGTH = 22
-export const VEHICLE_WIDTH = 12
-export const SAFE_GAP = 26
-export const STOP_MARGIN = 26
+export const CANVAS_WIDTH = 1500
+export const CANVAS_HEIGHT = 980
+export const ROAD_WIDTH = 64
+export const VEHICLE_LENGTH = 24
+export const VEHICLE_WIDTH = 13
+export const SAFE_GAP = 34
+export const STOP_MARGIN = 34
 export const YELLOW_TIME = 2
-export const SPEED_OPTIONS = [0.5, 1, 2, 4]
+export const SPEED_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 export const DEFAULT_CONTROLS = {
-  vehicleTarget: 80,
+  vehicleTarget: 40,
   speedMultiplier: 1,
-  greenTime: 8,
-  redTime: 8,
+  lightTimings: {
+    north_light: { greenTime: 11, redTime: 9 },
+    south_light: { greenTime: 8, redTime: 11 },
+    west_light: { greenTime: 6, redTime: 12 },
+    east_light: { greenTime: 9, redTime: 10 },
+  },
+  trafficRates: {
+    north_in: 1.8,
+    south_in: 1.15,
+    west_in: 0.65,
+    east_in: 1.0,
+  },
 }
 
 export const TRAFFIC_LIGHT_STATES = {
@@ -35,144 +45,165 @@ export const VEHICLE_COLORS = [
 ]
 
 export const INTERSECTION_BOUNDS = {
-  left: 420,
-  right: 540,
-  top: 300,
-  bottom: 420,
-}
-
-export const INTERSECTION_CENTER = {
-  x: (INTERSECTION_BOUNDS.left + INTERSECTION_BOUNDS.right) / 2,
-  y: (INTERSECTION_BOUNDS.top + INTERSECTION_BOUNDS.bottom) / 2,
+  left: 670,
+  right: 830,
+  top: 410,
+  bottom: 570,
 }
 
 export const INTERSECTION_POINTS = {
-  northIn: { x: 450, y: 300 },
-  northOut: { x: 510, y: 300 },
-  southIn: { x: 510, y: 420 },
-  southOut: { x: 450, y: 420 },
-  westIn: { x: 420, y: 390 },
-  westOut: { x: 420, y: 330 },
-  eastIn: { x: 540, y: 330 },
-  eastOut: { x: 540, y: 390 },
+  northIn: { x: 716, y: 410 },
+  northOut: { x: 784, y: 410 },
+  southIn: { x: 784, y: 570 },
+  southOut: { x: 716, y: 570 },
+  westIn: { x: 670, y: 524 },
+  westOut: { x: 670, y: 456 },
+  eastIn: { x: 830, y: 456 },
+  eastOut: { x: 830, y: 524 },
 }
 
 export const ROAD_DEFINITIONS = [
   {
     id: 'north_in',
-    startPoint: { x: 450, y: 30 },
+    startPoint: { x: 716, y: 40 },
     endPoint: INTERSECTION_POINTS.northIn,
     lanes: 1,
-    speedLimit: 120,
+    speedLimit: 126,
     controlledBy: 'north_light',
     entry: true,
     exit: false,
     axis: 'vertical',
+    label: 'Север',
   },
   {
     id: 'north_out',
     startPoint: INTERSECTION_POINTS.northOut,
-    endPoint: { x: 510, y: 30 },
+    endPoint: { x: 784, y: 40 },
     lanes: 1,
-    speedLimit: 140,
+    speedLimit: 150,
     entry: false,
     exit: true,
     axis: 'vertical',
+    label: 'Север выезд',
   },
   {
     id: 'south_in',
-    startPoint: { x: 510, y: 690 },
+    startPoint: { x: 784, y: 940 },
     endPoint: INTERSECTION_POINTS.southIn,
     lanes: 1,
-    speedLimit: 120,
+    speedLimit: 118,
     controlledBy: 'south_light',
     entry: true,
     exit: false,
     axis: 'vertical',
+    label: 'Юг',
   },
   {
     id: 'south_out',
     startPoint: INTERSECTION_POINTS.southOut,
-    endPoint: { x: 450, y: 690 },
+    endPoint: { x: 716, y: 940 },
     lanes: 1,
-    speedLimit: 140,
+    speedLimit: 150,
     entry: false,
     exit: true,
     axis: 'vertical',
+    label: 'Юг выезд',
   },
   {
     id: 'west_in',
-    startPoint: { x: 30, y: 390 },
+    startPoint: { x: 40, y: 524 },
     endPoint: INTERSECTION_POINTS.westIn,
     lanes: 1,
-    speedLimit: 120,
+    speedLimit: 112,
     controlledBy: 'west_light',
     entry: true,
     exit: false,
     axis: 'horizontal',
+    label: 'Запад',
   },
   {
     id: 'west_out',
     startPoint: INTERSECTION_POINTS.westOut,
-    endPoint: { x: 30, y: 330 },
+    endPoint: { x: 40, y: 456 },
     lanes: 1,
-    speedLimit: 140,
+    speedLimit: 144,
     entry: false,
     exit: true,
     axis: 'horizontal',
+    label: 'Запад выезд',
   },
   {
     id: 'east_in',
-    startPoint: { x: 930, y: 330 },
+    startPoint: { x: 1460, y: 456 },
     endPoint: INTERSECTION_POINTS.eastIn,
     lanes: 1,
-    speedLimit: 120,
+    speedLimit: 116,
     controlledBy: 'east_light',
     entry: true,
     exit: false,
     axis: 'horizontal',
+    label: 'Восток',
   },
   {
     id: 'east_out',
     startPoint: INTERSECTION_POINTS.eastOut,
-    endPoint: { x: 930, y: 390 },
+    endPoint: { x: 1460, y: 524 },
     lanes: 1,
-    speedLimit: 140,
+    speedLimit: 144,
     entry: false,
     exit: true,
     axis: 'horizontal',
+    label: 'Восток выезд',
   },
 ]
 
 export const LIGHT_DEFINITIONS = [
   {
     id: 'north_light',
-    x: 468,
-    y: 286,
+    x: 736,
+    y: 390,
     axis: 'vertical',
     initialState: TRAFFIC_LIGHT_STATES.GREEN,
+    title: 'Северный светофор',
   },
   {
     id: 'south_light',
-    x: 492,
-    y: 434,
+    x: 764,
+    y: 590,
     axis: 'vertical',
-    initialState: TRAFFIC_LIGHT_STATES.GREEN,
+    initialState: TRAFFIC_LIGHT_STATES.RED,
+    title: 'Южный светофор',
   },
   {
     id: 'west_light',
-    x: 434,
-    y: 372,
+    x: 648,
+    y: 500,
     axis: 'horizontal',
     initialState: TRAFFIC_LIGHT_STATES.RED,
+    title: 'Западный светофор',
   },
   {
     id: 'east_light',
-    x: 526,
-    y: 348,
+    x: 852,
+    y: 480,
     axis: 'horizontal',
-    initialState: TRAFFIC_LIGHT_STATES.RED,
+    initialState: TRAFFIC_LIGHT_STATES.GREEN,
+    title: 'Восточный светофор',
   },
+]
+
+export const LIGHT_CONTROL_META = [
+  { id: 'north_light', label: 'Северный светофор' },
+  { id: 'south_light', label: 'Южный светофор' },
+  { id: 'west_light', label: 'Западный светофор' },
+  { id: 'east_light', label: 'Восточный светофор' },
+]
+
+export const TRAFFIC_RATE_META = [
+  { id: 'north_in', label: 'Поток с севера' },
+  { id: 'south_in', label: 'Поток с юга' },
+  { id: 'west_in', label: 'Поток с запада' },
+  { id: 'east_in', label: 'Поток с востока' },
 ]
 
 export const ROUTE_OPTIONS = {

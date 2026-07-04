@@ -1,4 +1,4 @@
-import { SPEED_OPTIONS } from '../utils/constants'
+import { LIGHT_CONTROL_META, SPEED_OPTIONS, TRAFFIC_RATE_META } from '../utils/constants'
 
 function ControlPanel({
   controls,
@@ -9,7 +9,7 @@ function ControlPanel({
   onReset,
 }) {
   return (
-    <section className="panelCard">
+    <section className="panelCard controlPanelCard">
       <h2>Панель управления</h2>
 
       <div className="buttonRow">
@@ -43,15 +43,13 @@ function ControlPanel({
           id="vehicleTarget"
           className="slider"
           type="range"
-          min="10"
-          max="300"
+          min="0"
+          max="50"
           step="1"
           value={controls.vehicleTarget}
-          onChange={(event) =>
-            onChange('vehicleTarget', Number(event.target.value))
-          }
+          onChange={(event) => onChange(['vehicleTarget'], Number(event.target.value))}
         />
-        <p className="hintText">Целевое количество активных машин в системе.</p>
+        <p className="hintText">Целевое количество активных машин в симуляции.</p>
       </div>
 
       <div className="controlGroup">
@@ -71,49 +69,99 @@ function ControlPanel({
           value={String(SPEED_OPTIONS.indexOf(controls.speedMultiplier))}
           onChange={(event) =>
             onChange(
-              'speedMultiplier',
+              ['speedMultiplier'],
               SPEED_OPTIONS[Number(event.target.value)] ?? 1,
             )
           }
         />
-        <p className="hintText">Доступные режимы: 0.5x, 1x, 2x, 4x.</p>
       </div>
 
-      <div className="controlGroup">
-        <div className="controlLabelRow">
-          <label htmlFor="greenTime">Длительность зеленого сигнала</label>
-          <span className="controlValue">{controls.greenTime.toFixed(0)} c</span>
-        </div>
-        <input
-          id="greenTime"
-          className="slider"
-          type="range"
-          min="4"
-          max="16"
-          step="1"
-          value={controls.greenTime}
-          onChange={(event) => onChange('greenTime', Number(event.target.value))}
-        />
+      <div className="subPanel">
+        <h3>Интенсивность потоков</h3>
+        {TRAFFIC_RATE_META.map((rate) => (
+          <div key={rate.id} className="controlGroup compact">
+            <div className="controlLabelRow">
+              <label htmlFor={rate.id}>{rate.label}</label>
+              <span className="controlValue">
+                {controls.trafficRates[rate.id].toFixed(2)}x
+              </span>
+            </div>
+            <input
+              id={rate.id}
+              className="slider"
+              type="range"
+              min="0"
+              max="3"
+              step="0.05"
+              value={controls.trafficRates[rate.id]}
+              onChange={(event) =>
+                onChange(
+                  ['trafficRates', rate.id],
+                  Number(event.target.value),
+                )
+              }
+            />
+          </div>
+        ))}
       </div>
 
-      <div className="controlGroup">
-        <div className="controlLabelRow">
-          <label htmlFor="redTime">Длительность красного сигнала</label>
-          <span className="controlValue">{controls.redTime.toFixed(0)} c</span>
-        </div>
-        <input
-          id="redTime"
-          className="slider"
-          type="range"
-          min="4"
-          max="16"
-          step="1"
-          value={controls.redTime}
-          onChange={(event) => onChange('redTime', Number(event.target.value))}
-        />
+      <div className="subPanel">
+        <h3>Настройки светофоров</h3>
+        {LIGHT_CONTROL_META.map((light) => (
+          <div key={light.id} className="lightCard">
+            <h4>{light.label}</h4>
+
+            <div className="controlGroup compact">
+              <div className="controlLabelRow">
+                <label htmlFor={`${light.id}-green`}>Зеленый сигнал</label>
+                <span className="controlValue">
+                  {controls.lightTimings[light.id].greenTime.toFixed(0)} c
+                </span>
+              </div>
+              <input
+                id={`${light.id}-green`}
+                className="slider"
+                type="range"
+                min="0"
+                max="20"
+                step="1"
+                value={controls.lightTimings[light.id].greenTime}
+                onChange={(event) =>
+                  onChange(
+                    ['lightTimings', light.id, 'greenTime'],
+                    Number(event.target.value),
+                  )
+                }
+              />
+            </div>
+
+            <div className="controlGroup compact">
+              <div className="controlLabelRow">
+                <label htmlFor={`${light.id}-red`}>Красный сигнал</label>
+                <span className="controlValue">
+                  {controls.lightTimings[light.id].redTime.toFixed(0)} c
+                </span>
+              </div>
+              <input
+                id={`${light.id}-red`}
+                className="slider"
+                type="range"
+                min="0"
+                max="20"
+                step="1"
+                value={controls.lightTimings[light.id].redTime}
+                onChange={(event) =>
+                  onChange(
+                    ['lightTimings', light.id, 'redTime'],
+                    Number(event.target.value),
+                  )
+                }
+              />
+            </div>
+          </div>
+        ))}
         <p className="hintText">
-          Светофоры автоматически синхронизируются между вертикальным и
-          горизонтальным направлениями.
+          Желтый сигнал фиксирован и длится {2} секунды для каждого светофора.
         </p>
       </div>
     </section>

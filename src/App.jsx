@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import './App.css'
 import ControlPanel from './components/ControlPanel'
 import StatisticsPanel from './components/StatisticsPanel'
 import CanvasView from './components/CanvasView'
 import Simulation from './classes/Simulation'
 import { DEFAULT_CONTROLS } from './utils/constants'
+import { deepMerge } from './utils/helpers'
 
 function App() {
   const [simulation] = useState(() => new Simulation(DEFAULT_CONTROLS))
@@ -12,17 +13,9 @@ function App() {
   const [statistics, setStatistics] = useState(() => simulation.calculateStatistics())
   const [isRunning, setIsRunning] = useState(false)
 
-  useEffect(() => {
-    simulation.applyControls(controls)
-  }, [controls, simulation])
-
-  const handleControlChange = (name, value) => {
+  const handleControlChange = (path, value) => {
     setControls((current) => {
-      const nextControls = {
-        ...current,
-        [name]: value,
-      }
-
+      const nextControls = updateNestedControl(current, path, value)
       simulation.applyControls(nextControls)
       return nextControls
     })
@@ -54,8 +47,8 @@ function App() {
           <p className="eyebrow">Имитационная модель</p>
           <h1>Городское движение</h1>
           <p className="intro">
-            Реалистичная симуляция городского потока: автомобили соблюдают
-            светофоры, держат дистанцию и формируют пробки при высокой нагрузке.
+            Большая городская схема с разными потоками по направлениям,
+            независимыми настройками светофоров и живой статистикой по пробкам.
           </p>
         </div>
 
@@ -80,6 +73,27 @@ function App() {
       </section>
     </main>
   )
+}
+
+function updateNestedControl(currentControls, path, value) {
+  if (path.length === 1) {
+    return deepMerge(currentControls, { [path[0]]: value })
+  }
+
+  const patch = {}
+  let cursor = patch
+
+  path.forEach((segment, index) => {
+    if (index === path.length - 1) {
+      cursor[segment] = value
+      return
+    }
+
+    cursor[segment] = {}
+    cursor = cursor[segment]
+  })
+
+  return deepMerge(currentControls, patch)
 }
 
 export default App

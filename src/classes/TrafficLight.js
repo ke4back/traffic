@@ -6,6 +6,7 @@ class TrafficLight {
     x,
     y,
     axis,
+    title,
     initialState = TRAFFIC_LIGHT_STATES.RED,
     greenTime = 8,
     yellowTime = YELLOW_TIME,
@@ -15,24 +16,25 @@ class TrafficLight {
     this.x = x
     this.y = y
     this.axis = axis
+    this.title = title
     this.state = initialState
-    this.timer = this.getDurationForState(initialState, greenTime, yellowTime, redTime)
     this.greenTime = greenTime
     this.yellowTime = yellowTime
     this.redTime = redTime
+    this.timer = this.getDurationForState(initialState)
   }
 
   // Returns the configured duration for a specific traffic light state.
-  getDurationForState(state, greenTime = this.greenTime, yellowTime = this.yellowTime, redTime = this.redTime) {
+  getDurationForState(state) {
     if (state === TRAFFIC_LIGHT_STATES.GREEN) {
-      return greenTime
+      return this.greenTime
     }
 
     if (state === TRAFFIC_LIGHT_STATES.YELLOW) {
-      return yellowTime
+      return this.yellowTime
     }
 
-    return redTime
+    return this.redTime
   }
 
   // Applies fresh timings while preserving the current phase of the light.
@@ -68,6 +70,11 @@ class TrafficLight {
 
     this.state = TRAFFIC_LIGHT_STATES.GREEN
     this.timer = this.greenTime
+  }
+
+  // Returns whether vehicles facing this light may currently pass.
+  allowsTraffic() {
+    return this.state === TRAFFIC_LIGHT_STATES.GREEN
   }
 
   // Renders a compact traffic light head with the active lamp highlighted.

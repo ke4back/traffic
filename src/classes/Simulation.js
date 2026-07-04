@@ -14,7 +14,7 @@ import {
   VEHICLE_COLORS,
   YELLOW_TIME,
 } from '../utils/constants'
-import { clamp, pickRandom, randomRange } from '../utils/helpers'
+import { clamp, deepMerge, pickRandom, pickWeightedRandom, randomRange } from '../utils/helpers'
 
 class Simulation {
   constructor(controls = DEFAULT_CONTROLS) {
@@ -37,42 +37,34 @@ class Simulation {
     this.vehicleCounter = 0
     this.completedTrips = []
     this.spawnAccumulator = 0
-    this.controls = { ...DEFAULT_CONTROLS, ...controls }
+    this.controls = deepMerge(DEFAULT_CONTROLS, controls)
     this.buildMap()
     this.applyControls(this.controls)
   }
 
-  // Creates the road network, central intersection, and synchronized traffic lights.
+  // Creates the road network, central intersection, and traffic lights.
   buildMap() {
     this.roads = ROAD_DEFINITIONS.map((definition) => new Road(definition))
-    this.trafficLights = LIGHT_DEFINITIONS.map(
-      (definition) =>
-        new TrafficLight({
-          ...definition,
-          greenTime: this.controls.greenTime,
-          yellowTime: YELLOW_TIME,
-          redTime: this.controls.redTime,
-        }),
-    )
+    this.trafficLights = LIGHT_DEFINITIONS.map((definition) => {
+      const timings = this.controls.lightTimings[definition.id]
+
+      return new TrafficLight({
+        ...definition,
+        greenTime: timings.greenTime,
+        yellowTime: YELLOW_TIME,
+        redTime: timings.redTime,
+      })
+    })
     this.intersections = [new Intersection('central_crossing', INTERSECTION_BOUNDS)]
   }
 
   // Applies UI controls to the model without recreating the entire simulation.
   applyControls(controls) {
-    this.controls = {
-      ...this.controls,
-      ...controls,
-    }
-
-    const verticalRed = this.controls.redTime + YELLOW_TIME
-    const horizontalRed = this.controls.greenTime + YELLOW_TIME
+    this.controls = deepMerge(this.controls, controls)
 
     this.trafficLights.forEach((light) => {
-      if (light.axis === 'vertical') {
-        light.setDurations(this.controls.greenTime, YELLOW_TIME, verticalRed)
-      } else {
-        light.setDurations(this.controls.redTime, YELLOW_TIME, horizontalRed)
-      }
+      const timings = this.controls.lightTimings[light.id]
+      light.setDurations(timings.greenTime, YELLOW_TIME, timings.redTime)
     })
   }
 
@@ -102,7 +94,7 @@ class Simulation {
       averageTripTime: 0,
       completedRoutes: 0,
     }
-    this.controls = { ...DEFAULT_CONTROLS, ...nextControls }
+    this.controls = deepMerge(DEFAULT_CONTROLS, nextControls)
     this.buildMap()
     this.applyControls(this.controls)
   }
@@ -128,9 +120,12 @@ class Simulation {
   maybeSpawnVehicles() {
     const targetCount = this.controls.vehicleTarget
     const fillRatio = targetCount / 300
-    const spawnInterval = clamp(1.5 - fillRatio * 1.15, 0.22, 1.5)
+    const spawnInterval = clamp(1.35 - fillRatio * 0.95, 0.18, 1.35)
 
-    while (this.spawnAccumulator >= spawnInterval && this.vehicles.length < targetCount) {
+    while (
+      this.spawnAccumulator >= spawnInterval &&
+      this.vehicles.length < targetCount
+    ) {
       this.spawnAccumulator -= spawnInterval
 
       if (!this.spawnVehicle()) {
@@ -139,46 +134,57 @@ class Simulation {
     }
   }
 
-  // Creates a vehicle on a random entry road when there is enough free space to enter.
+  // Creates a vehicle on a weighted random entry road when there is enough free space to enter.
   spawnVehicle() {
     const entryRoads = this.roads.filter((road) => road.entry)
-    const road = pickRandom(entryRoads)
+    const attemptedRoadIds = new Set()
 
-    if (!road) {
-      return false
+    while (attemptedRoadIds.size < entryRoads.length) {
+      const road = pickWeightedRandom(
+        entryRoads.filter((entryRoad) => !attemptedRoadIds.has(entryRoad.id)),
+        (entryRoad) => this.controls.trafficRates[entryRoad.id] ?? 1,
+      )
+
+      if (!road) {
+        return false
+      }
+
+      attemptedRoadIds.add(road.id)
+
+      const leadVehicle = this.getVehicleNearRoadStart(road, 48)
+
+      if (leadVehicle) {
+        continue
+      }
+
+      const destination = pickRandom(ROUTE_OPTIONS[road.id] ?? [])
+
+      if (!destination) {
+        continue
+      }
+
+      const vehicle = new Vehicle({
+        id: `vehicle_${this.vehicleCounter + 1}`,
+        x: road.startPoint.x,
+        y: road.startPoint.y,
+        speed: randomRange(22, 36),
+        maxSpeed: randomRange(100, 142),
+        direction: road.directionVector,
+        currentRoad: road,
+        destination,
+        waitingTime: 0,
+        route: [road.id, destination],
+        color: pickRandom(VEHICLE_COLORS) ?? '#495057',
+        spawnedAt: this.time,
+      })
+
+      this.vehicleCounter += 1
+      road.addVehicle(vehicle)
+      this.vehicles.push(vehicle)
+      return true
     }
 
-    const leadVehicle = road.vehicles.find((vehicle) => vehicle.progress <= 0.12)
-
-    if (leadVehicle) {
-      return false
-    }
-
-    const destination = pickRandom(ROUTE_OPTIONS[road.id] ?? [])
-
-    if (!destination) {
-      return false
-    }
-
-    const vehicle = new Vehicle({
-      id: `vehicle_${this.vehicleCounter + 1}`,
-      x: road.startPoint.x,
-      y: road.startPoint.y,
-      speed: randomRange(24, 42),
-      maxSpeed: randomRange(108, 152),
-      direction: road.directionVector,
-      currentRoad: road,
-      destination,
-      waitingTime: 0,
-      route: [road.id, destination],
-      color: pickRandom(VEHICLE_COLORS) ?? '#495057',
-      spawnedAt: this.time,
-    })
-
-    this.vehicleCounter += 1
-    road.addVehicle(vehicle)
-    this.vehicles.push(vehicle)
-    return true
+    return false
   }
 
   // Computes up-to-date aggregate metrics for the statistics panel.
@@ -213,7 +219,7 @@ class Simulation {
     return { ...this.statistics }
   }
 
-  // Updates every light while preserving the vertical-vs-horizontal phase relationship.
+  // Updates every light independently according to its own configuration.
   updateTrafficLights(deltaTime) {
     this.trafficLights.forEach((light) => light.update(deltaTime))
   }
@@ -235,21 +241,79 @@ class Simulation {
       const vehicleAhead = road.getVehicleAhead(vehicle)
       const light = road.controlledBy ? this.getTrafficLightById(road.controlledBy) : null
       const lightState = light ? light.state : TRAFFIC_LIGHT_STATES.GREEN
+      const canExitRoad = this.canVehicleEnterNextRoad(vehicle)
 
       vehicle.update(deltaTime, {
         lightState,
         vehicleAhead,
+        canExitRoad,
       })
 
-      if (vehicle.progress >= 1) {
+      if (this.shouldAdvanceVehicle(vehicle, lightState, canExitRoad)) {
         this.advanceVehicle(vehicle)
       }
     })
   }
 
+  // Transfers queued vehicles from the stop line as soon as the light allows it.
+  shouldAdvanceVehicle(vehicle, lightState, canExitRoad) {
+    if (vehicle.progress >= 1) {
+      return true
+    }
+
+    if (!canExitRoad || !vehicle.currentRoad.controlledBy) {
+      return false
+    }
+
+    if (lightState !== TRAFFIC_LIGHT_STATES.GREEN) {
+      return false
+    }
+
+    const stopProgress = vehicle.currentRoad.getStopProgress(vehicle)
+    return vehicle.progress >= stopProgress - 0.0001
+  }
+
+  // Returns whether the next route segment has enough room to accept this vehicle.
+  canVehicleEnterNextRoad(vehicle) {
+    if (vehicle.routeIndex >= vehicle.route.length - 1) {
+      return true
+    }
+
+    const nextRoad = this.getRoadById(vehicle.route[vehicle.routeIndex + 1])
+
+    if (!nextRoad) {
+      return true
+    }
+
+    const roadStartVehicle = this.getVehicleNearRoadStart(nextRoad, 52)
+    return !roadStartVehicle
+  }
+
+  // Checks whether a road entry zone is occupied using a fixed world distance.
+  getVehicleNearRoadStart(road, clearanceDistance) {
+    return (
+      road.vehicles.find(
+        (candidate) => candidate.progress * road.length <= clearanceDistance,
+      ) ?? null
+    )
+  }
+
   // Moves a vehicle to the next road in its route or marks the trip as complete.
   advanceVehicle(vehicle) {
     const currentRoad = vehicle.currentRoad
+
+    if (!this.canVehicleEnterNextRoad(vehicle)) {
+      vehicle.progress = Math.min(
+        vehicle.progress,
+        currentRoad.getStopProgress(vehicle),
+      )
+      const point = currentRoad.getPointAt(vehicle.progress)
+      vehicle.x = point.x
+      vehicle.y = point.y
+      vehicle.stop()
+      return
+    }
+
     currentRoad.removeVehicle(vehicle)
 
     if (vehicle.routeIndex < vehicle.route.length - 1) {
@@ -303,46 +367,55 @@ class Simulation {
     this.vehicles.forEach((vehicle) => vehicle.draw(ctx))
   }
 
-  // Draws decorative city blocks and green zones around the transport network.
+  // Draws a simple green background with a light repeating tile pattern.
   drawBackground(ctx) {
     ctx.save()
-    ctx.fillStyle = '#d9ead3'
+    ctx.fillStyle = '#d8ead0'
     ctx.fillRect(0, 0, this.width, this.height)
 
-    const blocks = [
-      { x: 70, y: 60, width: 250, height: 170, color: '#cdb4db' },
-      { x: 640, y: 70, width: 230, height: 160, color: '#ffd6a5' },
-      { x: 80, y: 500, width: 260, height: 150, color: '#bde0fe' },
-      { x: 630, y: 500, width: 250, height: 150, color: '#caffbf' },
-    ]
-
-    blocks.forEach(({ x, y, width, height, color }) => {
-      ctx.fillStyle = color
-      ctx.fillRect(x, y, width, height)
-      ctx.strokeStyle = 'rgba(23, 38, 51, 0.08)'
-      ctx.strokeRect(x, y, width, height)
-    })
-
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.35)'
-    for (let y = 20; y < this.height; y += 70) {
-      for (let x = 20; x < this.width; x += 70) {
-        ctx.fillRect(x, y, 26, 10)
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.24)'
+    for (let y = 18; y < this.height; y += 78) {
+      for (let x = 18; x < this.width; x += 78) {
+        ctx.fillRect(x, y, 28, 12)
       }
     }
 
     ctx.restore()
   }
 
-  // Writes small labels to help users read the direction of each entry corridor.
+  // Writes direction labels and live flow intensities onto the map.
   drawRoadLabels(ctx) {
-    ctx.save()
-    ctx.fillStyle = 'rgba(18, 33, 46, 0.8)'
-    ctx.font = '600 14px Trebuchet MS'
+    const labelConfig = [
+      {
+        text: `Северный поток x${this.controls.trafficRates.north_in.toFixed(1)}`,
+        x: 624,
+        y: 70,
+      },
+      {
+        text: `Южный поток x${this.controls.trafficRates.south_in.toFixed(1)}`,
+        x: 630,
+        y: 930,
+      },
+      {
+        text: `Западный поток x${this.controls.trafficRates.west_in.toFixed(1)}`,
+        x: 52,
+        y: 560,
+      },
+      {
+        text: `Восточный поток x${this.controls.trafficRates.east_in.toFixed(1)}`,
+        x: 1140,
+        y: 430,
+      },
+    ]
 
-    ctx.fillText('Северный поток', 388, 58)
-    ctx.fillText('Южный поток', 392, 676)
-    ctx.fillText('Западный поток', 42, 420)
-    ctx.fillText('Восточный поток', 796, 302)
+    ctx.save()
+    ctx.fillStyle = 'rgba(18, 33, 46, 0.84)'
+    ctx.font = '600 18px Trebuchet MS'
+
+    labelConfig.forEach(({ text, x, y }) => {
+      ctx.fillText(text, x, y)
+    })
+
     ctx.restore()
   }
 }

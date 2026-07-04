@@ -27,16 +27,6 @@ class Intersection {
     ctx.lineTo((left + right) / 2, bottom)
     ctx.stroke()
 
-    ctx.setLineDash([])
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.75)'
-
-    for (let i = 0; i < 6; i += 1) {
-      ctx.fillRect(left - 24, top + 8 + i * 16, 18, 8)
-      ctx.fillRect(right + 6, top + 8 + i * 16, 18, 8)
-      ctx.fillRect(left + 8 + i * 16, top - 24, 8, 18)
-      ctx.fillRect(left + 8 + i * 16, bottom + 6, 8, 18)
-    }
-
     ctx.restore()
   }
 }

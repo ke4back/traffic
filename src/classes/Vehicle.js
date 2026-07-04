@@ -38,11 +38,17 @@ class Vehicle {
   }
 
   // Moves the vehicle forward along the current road according to its speed.
-  move(deltaTime) {
+  move(deltaTime, maxProgress = 1.15) {
     const distance = this.speed * deltaTime
     const progressStep = this.currentRoad.length > 0 ? distance / this.currentRoad.length : 0
+    const desiredProgress = this.progress + progressStep
+    const nextProgress = clamp(Math.min(desiredProgress, maxProgress), 0, 1.15)
 
-    this.progress = clamp(this.progress + progressStep, 0, 1.15)
+    if (nextProgress <= this.progress + 0.0001 && this.speed > 0.2) {
+      this.speed = 0
+    }
+
+    this.progress = nextProgress
 
     const point = this.currentRoad.getPointAt(this.progress)
     this.x = point.x
@@ -54,25 +60,18 @@ class Vehicle {
     this.speed = 0
   }
 
-  // Smoothly adjusts speed toward the current target instead of snapping instantly.
-  accelerate(deltaTime, targetSpeed) {
-    const acceleration = 42
-    const braking = 68
-
-    if (targetSpeed > this.speed) {
-      this.speed = Math.min(this.speed + acceleration * deltaTime, targetSpeed)
-      return
-    }
-
-    this.speed = Math.max(this.speed - braking * deltaTime, targetSpeed)
+  // Instantly switches between a full-speed state and a complete stop.
+  accelerate(targetSpeed) {
+    this.speed = targetSpeed
   }
 
   // Evaluates signals, spacing, and speed limits before advancing along the road.
   update(deltaTime, context) {
-    const { vehicleAhead, lightState } = context
+    const { vehicleAhead, lightState, canExitRoad } = context
     const speedLimit = Math.min(this.maxSpeed, this.currentRoad.speedLimit)
     let targetSpeed = speedLimit
-    const stopProgress = this.currentRoad.getStopProgress()
+    let maxProgress = 1.15
+    const stopProgress = this.currentRoad.getStopProgress(this)
     const distanceToStopLine = Math.max(
       0,
       (stopProgress - this.progress) * this.currentRoad.length,
@@ -83,32 +82,45 @@ class Vehicle {
     if (lightState && lightState !== 'green') {
       if (distanceToStopLine <= this.safeGap) {
         targetSpeed = 0
-      } else if (distanceToStopLine <= this.safeGap * 3) {
-        targetSpeed = Math.min(targetSpeed, (distanceToStopLine / (this.safeGap * 3)) * speedLimit)
+        maxProgress = Math.min(maxProgress, stopProgress)
       }
     }
 
     if (vehicleAhead) {
       const gap = Math.max(
         0,
-        (vehicleAhead.progress - this.progress) * this.currentRoad.length - vehicleAhead.length,
+        (vehicleAhead.progress - this.progress) * this.currentRoad.length -
+          vehicleAhead.length,
       )
 
-      if (gap <= this.safeGap * 0.65) {
+      const maxSafeProgress = this.currentRoad.getMaxSafeProgress(
+        this,
+        1.15,
+        this.safeGap,
+      )
+
+      maxProgress = Math.min(maxProgress, maxSafeProgress)
+
+      if (gap <= this.safeGap) {
         targetSpeed = 0
-      } else if (gap <= this.safeGap * 2.8) {
-        targetSpeed = Math.min(targetSpeed, (gap / (this.safeGap * 2.8)) * speedLimit)
       }
     }
 
-    this.accelerate(deltaTime, targetSpeed)
+    if (!canExitRoad) {
+      if (distanceToStopLine <= this.safeGap) {
+        targetSpeed = 0
+        maxProgress = Math.min(maxProgress, stopProgress)
+      }
+    }
+
+    this.accelerate(targetSpeed)
 
     if (this.speed <= 0.08) {
       this.stop()
       this.waitingTime += deltaTime
     }
 
-    this.move(deltaTime)
+    this.move(deltaTime, maxProgress)
   }
 
   // Draws a simple rotated car body aligned with the road direction.

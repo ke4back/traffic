@@ -1,5 +1,5 @@
 import { ROAD_WIDTH, STOP_MARGIN } from '../utils/constants'
-import { distanceBetween, normalizeVector } from '../utils/helpers'
+import { clamp, distanceBetween, normalizeVector } from '../utils/helpers'
 
 class Road {
   constructor({
@@ -12,6 +12,7 @@ class Road {
     entry = false,
     exit = false,
     axis = 'vertical',
+    label = '',
   }) {
     this.id = id
     this.startPoint = startPoint
@@ -23,6 +24,7 @@ class Road {
     this.entry = entry
     this.exit = exit
     this.axis = axis
+    this.label = label
     this.length = distanceBetween(startPoint, endPoint)
     this.directionVector = normalizeVector({
       x: endPoint.x - startPoint.x,
@@ -43,7 +45,7 @@ class Road {
     this.vehicles = this.vehicles.filter(({ id }) => id !== vehicle.id)
   }
 
-  // Sorts vehicles so followers can query the car ahead on the same segment.
+  // Sorts vehicles so followers can query the car ahead on the same road.
   updateTraffic() {
     this.vehicles.sort((vehicleA, vehicleB) => vehicleB.progress - vehicleA.progress)
   }
@@ -60,9 +62,36 @@ class Road {
     return this.vehicles[index - 1]
   }
 
+  // Returns the first vehicle close to the beginning of the road.
+  getVehicleNearStart(progressThreshold = 0.12) {
+    this.updateTraffic()
+    return (
+      [...this.vehicles]
+        .reverse()
+        .find((vehicle) => vehicle.progress <= progressThreshold) ?? null
+    )
+  }
+
   // Returns the progress value where vehicles should stop for a red light.
-  getStopProgress() {
-    return Math.max(0, (this.length - STOP_MARGIN) / this.length)
+  getStopProgress(vehicle = null) {
+    const vehicleOffset = vehicle ? vehicle.length / 2 + 2 : STOP_MARGIN / 2
+    const stopOffset = Math.max(4, vehicleOffset)
+
+    return Math.max(0, (this.length - stopOffset) / this.length)
+  }
+
+  // Returns the latest safe progress to avoid overlapping with the next vehicle.
+  getMaxSafeProgress(vehicle, desiredProgress, gapDistance = vehicle.safeGap) {
+    const vehicleAhead = this.getVehicleAhead(vehicle)
+
+    if (!vehicleAhead) {
+      return clamp(desiredProgress, 0, 1.15)
+    }
+
+    const reservedDistance = gapDistance + vehicle.length
+    const maxProgress = vehicleAhead.progress - reservedDistance / this.length
+
+    return clamp(Math.min(desiredProgress, maxProgress), 0, 1.15)
   }
 
   // Converts a normalized progress value to a world position on the road.
@@ -79,7 +108,7 @@ class Road {
   draw(ctx) {
     ctx.save()
     ctx.lineCap = 'round'
-    ctx.strokeStyle = '#515a64'
+    ctx.strokeStyle = '#49515a'
     ctx.lineWidth = ROAD_WIDTH
 
     ctx.beginPath()
@@ -89,7 +118,7 @@ class Road {
 
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.72)'
     ctx.lineWidth = 2
-    ctx.setLineDash([12, 14])
+    ctx.setLineDash([14, 16])
 
     ctx.beginPath()
     ctx.moveTo(this.startPoint.x, this.startPoint.y)
