@@ -26,7 +26,6 @@ class Simulation {
     this.vehicles = []
     this.trafficLights = []
     this.intersections = []
-    this.time = 0
     this.statistics = {
       activeVehicles: 0,
       averageSpeed: 0,
@@ -58,7 +57,7 @@ class Simulation {
         redTime: timings.redTime,
       })
     })
-    this.intersections = [new Intersection('central_crossing', INTERSECTION_BOUNDS)]
+    this.intersections = [new Intersection(INTERSECTION_BOUNDS)]
   }
 
   // Applies UI controls to the model without recreating the entire simulation.
@@ -84,7 +83,6 @@ class Simulation {
   // Rebuilds the world state and clears accumulated vehicles and statistics.
   reset(nextControls = this.controls) {
     this.running = false
-    this.time = 0
     this.vehicleCounter = 0
     this.spawnAccumulator = 0
     this.vehicles = []
@@ -111,7 +109,6 @@ class Simulation {
 
     const scaledDelta = deltaTime * this.controls.speedMultiplier
 
-    this.time += scaledDelta
     this.spawnAccumulator += scaledDelta
 
     this.updateTrafficLights(scaledDelta)

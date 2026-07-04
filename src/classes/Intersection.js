@@ -1,8 +1,7 @@
 import { INTERSECTION_BOUNDS } from '../utils/constants'
 
 class Intersection {
-  constructor(id, bounds = INTERSECTION_BOUNDS) {
-    this.id = id
+  constructor(bounds = INTERSECTION_BOUNDS) {
     this.bounds = bounds
   }
 
