@@ -142,7 +142,7 @@ function ControlPanel({
 
             <div className="controlGroup compact">
               <div className="controlLabelRow">
-                <label htmlFor={`${light.id}-green`}>Зеленый сигнал</label>
+                <label htmlFor={`${light.id}-green`}>Зелёный сигнал</label>
                 <span className="controlValue">
                   {controls.lightTimings[light.id].greenTime.toFixed(0)} c
                 </span>
@@ -190,7 +190,7 @@ function ControlPanel({
           </div>
         ))}
         <p className="hintText">
-          Желтый сигнал фиксирован и длится {2} секунды для каждого светофора.
+          Жёлтый сигнал фиксирован и длится {2} секунды для каждого светофора.
         </p>
       </div>
     </section>

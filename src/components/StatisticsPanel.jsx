@@ -27,7 +27,7 @@ function StatisticsPanel({ statistics }) {
           <span className="statValue">{formatTime(statistics.averageTripTime)}</span>
         </div>
         <div className="statCard">
-          <span className="statLabel">Завершенные маршруты</span>
+          <span className="statLabel">Завершённые маршруты</span>
           <span className="statValue">{statistics.completedRoutes}</span>
         </div>
       </div>
@@ -38,14 +38,14 @@ function StatisticsPanel({ statistics }) {
             className="legendDot"
             style={{ backgroundColor: '#2f9e62' }}
           ></span>
-          Зеленый: движение
+          Зелёный: движение
         </span>
         <span className="legendItem">
           <span
             className="legendDot"
             style={{ backgroundColor: '#f59f00' }}
           ></span>
-          Желтый: переключение
+          Жёлтый: переключение
         </span>
         <span className="legendItem">
           <span

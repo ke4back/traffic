@@ -175,11 +175,9 @@ class Simulation {
         maxSpeed: randomRange(100, 142),
         direction: road.directionVector,
         currentRoad: road,
-        destination,
         waitingTime: 0,
         route: [road.id, destination],
         color: pickRandom(VEHICLE_COLORS) ?? '#495057',
-        spawnedAt: this.time,
       })
 
       this.vehicleCounter += 1
