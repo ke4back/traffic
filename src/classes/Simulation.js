@@ -16,6 +16,8 @@ import {
 } from '../utils/constants'
 import { clamp, deepMerge, pickRandom, pickWeightedRandom, randomRange } from '../utils/helpers'
 
+const INTERSECTION_COOLDOWN_TICKS = 32
+
 class Simulation {
   constructor(controls = DEFAULT_CONTROLS) {
     this.width = CANVAS_WIDTH
@@ -37,6 +39,7 @@ class Simulation {
     this.vehicleCounter = 0
     this.completedTrips = []
     this.spawnAccumulator = 0
+    this.intersectionCooldownTicks = 0
     this.controls = deepMerge(DEFAULT_CONTROLS, controls)
     this.buildMap()
     this.applyControls(this.controls)
@@ -86,6 +89,7 @@ class Simulation {
     this.spawnAccumulator = 0
     this.vehicles = []
     this.completedTrips = []
+    this.intersectionCooldownTicks = 0
     this.statistics = {
       activeVehicles: 0,
       averageSpeed: 0,
@@ -119,8 +123,8 @@ class Simulation {
   // Spawns new vehicles until the active count approaches the configured target.
   maybeSpawnVehicles() {
     const targetCount = this.controls.vehicleTarget
-    const fillRatio = targetCount / 300
-    const spawnInterval = clamp(1.35 - fillRatio * 0.95, 0.18, 1.35)
+    const fillRatio = targetCount / 50
+    const spawnInterval = clamp(0.7 - fillRatio * 0.45, 0.08, 0.7)
 
     while (
       this.spawnAccumulator >= spawnInterval &&
@@ -226,6 +230,10 @@ class Simulation {
 
   // Advances all active vehicles and transfers them between route segments when needed.
   updateVehicles(deltaTime) {
+    if (this.intersectionCooldownTicks > 0) {
+      this.intersectionCooldownTicks -= 1
+    }
+
     this.roads.forEach((road) => road.updateTraffic())
 
     const vehiclesSnapshot = [...this.vehicles].sort((vehicleA, vehicleB) => {
@@ -265,6 +273,10 @@ class Simulation {
       return false
     }
 
+    if (this.intersectionCooldownTicks > 0) {
+      return false
+    }
+
     if (lightState !== TRAFFIC_LIGHT_STATES.GREEN) {
       return false
     }
@@ -275,6 +287,10 @@ class Simulation {
 
   // Returns whether the next route segment has enough room to accept this vehicle.
   canVehicleEnterNextRoad(vehicle) {
+    if (vehicle.currentRoad.controlledBy && this.intersectionCooldownTicks > 0) {
+      return false
+    }
+
     if (vehicle.routeIndex >= vehicle.route.length - 1) {
       return true
     }
@@ -331,6 +347,7 @@ class Simulation {
       vehicle.progress = 0
       vehicle.x = nextRoad.startPoint.x
       vehicle.y = nextRoad.startPoint.y
+      this.intersectionCooldownTicks = INTERSECTION_COOLDOWN_TICKS
       nextRoad.addVehicle(vehicle)
       return
     }
