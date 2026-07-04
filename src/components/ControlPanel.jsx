@@ -77,6 +77,25 @@ function ControlPanel({
         />
       </div>
 
+      <div className="controlGroup">
+        <div className="controlLabelRow">
+          <label htmlFor="breakdownChance">Вероятность поломки машины</label>
+          <span className="controlValue">
+            {(controls.breakdownChance * 100).toFixed(2)}%
+          </span>
+        </div>
+        <input
+          id="breakdownChance"
+          className="slider"
+          type="range"
+          min="0"
+          max="0.0002"
+          step="0.00001"
+          value={controls.breakdownChance}
+          onChange={(event) => onChange(['breakdownChance'], Number(event.target.value))}
+        />
+      </div>
+
       <div className="subPanel">
         <h3>Интенсивность потоков</h3>
         <div className="buttonRow">

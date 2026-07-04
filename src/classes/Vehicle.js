@@ -1,4 +1,9 @@
-import { SAFE_GAP, VEHICLE_LENGTH, VEHICLE_WIDTH } from '../utils/constants'
+import {
+  SAFE_GAP,
+  VEHICLE_LENGTH,
+  VEHICLE_REPAIR_TICKS,
+  VEHICLE_WIDTH,
+} from '../utils/constants'
 import { clamp, randomRange } from '../utils/helpers'
 
 class Vehicle {
@@ -35,6 +40,8 @@ class Vehicle {
     this.width = VEHICLE_WIDTH
     this.finished = false
     this.safeGap = SAFE_GAP + randomRange(0, 10)
+    this.isBroken = false
+    this.repairTicksRemaining = 0
   }
 
   // Moves the vehicle forward along the current road according to its speed.
@@ -65,9 +72,30 @@ class Vehicle {
     this.speed = targetSpeed
   }
 
+  // Starts a repair pause that leaves the car blocking its current lane.
+  breakDown() {
+    this.isBroken = true
+    this.repairTicksRemaining = VEHICLE_REPAIR_TICKS
+    this.stop()
+  }
+
   // Evaluates signals, spacing, and speed limits before advancing along the road.
   update(deltaTime, context) {
-    const { vehicleAhead, lightState, canExitRoad } = context
+    const { vehicleAhead, lightState, canExitRoad, breakdownChance = 0 } = context
+    this.travelTime += deltaTime
+
+    if (this.isBroken) {
+      this.repairTicksRemaining = Math.max(0, this.repairTicksRemaining - 1)
+      this.waitingTime += deltaTime
+      this.stop()
+
+      if (this.repairTicksRemaining === 0) {
+        this.isBroken = false
+      }
+
+      return
+    }
+
     const speedLimit = Math.min(this.maxSpeed, this.currentRoad.speedLimit)
     let targetSpeed = speedLimit
     let maxProgress = 1.15
@@ -76,8 +104,6 @@ class Vehicle {
       0,
       (stopProgress - this.progress) * this.currentRoad.length,
     )
-
-    this.travelTime += deltaTime
 
     if (lightState && lightState !== 'green') {
       if (distanceToStopLine <= this.safeGap) {
@@ -113,6 +139,12 @@ class Vehicle {
       }
     }
 
+    if (this.speed > 0.08 && breakdownChance > 0 && Math.random() < breakdownChance) {
+      this.breakDown()
+      this.waitingTime += deltaTime
+      return
+    }
+
     this.accelerate(targetSpeed)
 
     if (this.speed <= 0.08) {
@@ -131,6 +163,11 @@ class Vehicle {
 
     ctx.fillStyle = this.color
     ctx.fillRect(-this.length / 2, -this.width / 2, this.length, this.width)
+
+    if (this.isBroken) {
+      ctx.fillStyle = '#c92a2a'
+      ctx.fillRect(-4, -this.width / 2 - 5, 8, 4)
+    }
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.72)'
     ctx.fillRect(-this.length / 4, -this.width / 2 + 2, this.length / 2, this.width - 4)

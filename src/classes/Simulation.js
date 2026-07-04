@@ -255,6 +255,7 @@ class Simulation {
         lightState,
         vehicleAhead,
         canExitRoad,
+        breakdownChance: this.controls.breakdownChance,
       })
 
       if (this.shouldAdvanceVehicle(vehicle, lightState, canExitRoad)) {

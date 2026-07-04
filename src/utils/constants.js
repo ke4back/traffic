@@ -7,10 +7,12 @@ export const SAFE_GAP = 34
 export const STOP_MARGIN = 34
 export const YELLOW_TIME = 2
 export const SPEED_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+export const VEHICLE_REPAIR_TICKS = 256
 
 export const DEFAULT_CONTROLS = {
   vehicleTarget: 40,
   speedMultiplier: 1,
+  breakdownChance: 0,
   lightTimings: {
     north_light: { greenTime: 5, redTime: 5 },
     south_light: { greenTime: 5, redTime: 5 },
