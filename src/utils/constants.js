@@ -12,10 +12,10 @@ export const DEFAULT_CONTROLS = {
   vehicleTarget: 40,
   speedMultiplier: 1,
   lightTimings: {
-    north_light: { greenTime: 11, redTime: 9 },
-    south_light: { greenTime: 8, redTime: 11 },
-    west_light: { greenTime: 6, redTime: 12 },
-    east_light: { greenTime: 9, redTime: 10 },
+    north_light: { greenTime: 5, redTime: 5 },
+    south_light: { greenTime: 5, redTime: 5 },
+    west_light: { greenTime: 5, redTime: 5 },
+    east_light: { greenTime: 5, redTime: 5 },
   },
   trafficRates: {
     north_in: 1.8,

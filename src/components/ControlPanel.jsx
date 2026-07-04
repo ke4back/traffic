@@ -4,6 +4,7 @@ function ControlPanel({
   controls,
   isRunning,
   onChange,
+  onRandomizeTraffic,
   onStart,
   onStop,
   onReset,
@@ -78,6 +79,15 @@ function ControlPanel({
 
       <div className="subPanel">
         <h3>Интенсивность потоков</h3>
+        <div className="buttonRow">
+          <button
+            type="button"
+            className="controlButton reset fullWidthButton"
+            onClick={onRandomizeTraffic}
+          >
+            Случайные потоки
+          </button>
+        </div>
         {TRAFFIC_RATE_META.map((rate) => (
           <div key={rate.id} className="controlGroup compact">
             <div className="controlLabelRow">

@@ -401,23 +401,23 @@ class Simulation {
     const labelConfig = [
       {
         text: `Северный поток x${this.controls.trafficRates.north_in.toFixed(1)}`,
-        x: 624,
+        x: 450,
         y: 70,
       },
       {
         text: `Южный поток x${this.controls.trafficRates.south_in.toFixed(1)}`,
-        x: 630,
+        x: 500,
         y: 930,
       },
       {
         text: `Западный поток x${this.controls.trafficRates.west_in.toFixed(1)}`,
         x: 52,
-        y: 560,
+        y: 400,
       },
       {
         text: `Восточный поток x${this.controls.trafficRates.east_in.toFixed(1)}`,
-        x: 1140,
-        y: 430,
+        x: 1300,
+        y: 400,
       },
     ]
 

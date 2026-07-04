@@ -4,7 +4,7 @@ import ControlPanel from './components/ControlPanel'
 import StatisticsPanel from './components/StatisticsPanel'
 import CanvasView from './components/CanvasView'
 import Simulation from './classes/Simulation'
-import { DEFAULT_CONTROLS } from './utils/constants'
+import { DEFAULT_CONTROLS, TRAFFIC_RATE_META } from './utils/constants'
 import { deepMerge } from './utils/helpers'
 
 function App() {
@@ -40,6 +40,20 @@ function App() {
     setStatistics(simulation.calculateStatistics())
   }
 
+  const handleRandomizeTraffic = () => {
+    setControls((current) => {
+      const trafficRates = TRAFFIC_RATE_META.reduce((nextRates, { id }) => {
+        nextRates[id] = Number((Math.random() * 3).toFixed(2))
+        return nextRates
+      }, {})
+      const nextControls = deepMerge(current, { trafficRates })
+      simulation.applyControls(nextControls)
+      return nextControls
+    })
+
+    setStatistics(simulation.calculateStatistics())
+  }
+
   return (
     <main className="appShell">
       <aside className="sidebar">
@@ -56,6 +70,7 @@ function App() {
           controls={controls}
           isRunning={isRunning}
           onChange={handleControlChange}
+          onRandomizeTraffic={handleRandomizeTraffic}
           onStart={handleStart}
           onStop={handleStop}
           onReset={handleReset}

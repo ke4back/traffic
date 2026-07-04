@@ -167,6 +167,11 @@
   color: #fff9f2;
 }
 
+.fullWidthButton {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
 .controlGroup {
   display: grid;
   gap: 8px;
