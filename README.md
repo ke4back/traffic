@@ -1,16 +1,121 @@
-# React + Vite
+# Traffic Simulation
+![React](https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB)
+![Vite](https://img.shields.io/badge/Vite-B73BFE?style=flat&logo=vite&logoColor=FFD62E)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black)
+![Status](https://img.shields.io/badge/status-playable-2f9e62)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Браузерная имитационная модель городского перекрёстка с настраиваемыми светофорами, потоками машин, вероятностью поломок и живой статистикой.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Key Features
 
-## React Compiler
+* **Регулируемые светофоры:** Для каждого направления можно отдельно менять красный и зелёный сигнал.
+* **Гибкие потоки трафика:** Интенсивность машин по каждому въезду настраивается вручную или случайной кнопкой.
+* **Управление скоростью симуляции:** Модель можно ускорять для быстрого анализа сценариев.
+* **Поломки машин:** Автомобили могут ломаться прямо в потоке и временно блокировать движение.
+* **Статистика в реальном времени:** Панель показывает активные машины, среднюю скорость, ожидание, пробки и завершённые маршруты.
+* **Визуальная карта перекрёстка:** Дороги, центральный узел, светофоры и машины отрисовываются на `canvas`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## Controls
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+<details>
+<summary><b>Показать таблицу управления</b></summary>
+
+| Действие | Элемент |
+| :--- | :--- |
+| **Запуск симуляции** | `Start` |
+| **Остановка симуляции** | `Stop` |
+| **Сброс состояния** | `Reset` |
+| **Количество машин** | Ползунок `Количество автомобилей` |
+| **Скорость модели** | Ползунок `Скорость моделирования` |
+| **Вероятность поломки** | Ползунок `Вероятность поломки (в тик)` |
+| **Интенсивность потоков** | Ползунки по направлениям |
+| **Случайные потоки** | Кнопка `Случайные потоки` |
+| **Настройка светофоров** | Ползунки красного и зелёного сигнала |
+
+</details>
+
+---
+
+## Simulation Mechanics
+
+<details>
+<summary><b>Показать основные механики</b></summary>
+
+| Механика | Описание |
+| :--- | :--- |
+| **Спавн машин** | Машины появляются на въездах с учётом целевого количества и интенсивности потока |
+| **Движение по дорогам** | Каждая машина едет по маршруту из входящего и исходящего сегмента |
+| **Стоп-линия** | Перед перекрёстком машины учитывают сигнал светофора и занятость следующего участка |
+| **Кулдаун перекрёстка** | После проезда одной машины следующая ждёт заданное количество тиков |
+| **Поломка** | Во время движения машина может остановиться на ремонт и заблокировать полосу |
+| **Ремонт** | После заданного числа тиков машина снова продолжает движение |
+
+</details>
+
+---
+
+## Project Structure
+
+```text
+src/
+|-- classes/
+|   |-- Simulation.js      # Основная логика мира, обновление машин и светофоров
+|   |-- Vehicle.js         # Поведение машины, движение, поломка, ремонт
+|   |-- Road.js            # Дорожный сегмент и работа с машинами на полосе
+|   |-- TrafficLight.js    # Цикл состояний светофора
+|   `-- Intersection.js    # Отрисовка центрального перекрёстка
+|-- components/
+|   |-- ControlPanel.jsx   # Панель управления параметрами симуляции
+|   |-- StatisticsPanel.jsx# Панель статистики
+|   `-- CanvasView.jsx     # Canvas и цикл визуального обновления
+|-- hooks/
+|   `-- useAnimation.js    # Анимационный цикл на requestAnimationFrame
+|-- utils/
+|   |-- constants.js       # Константы карты, контролов и метаданных
+|   `-- helpers.js         # Вспомогательные функции
+|-- App.jsx
+|-- App.css
+|-- main.jsx
+`-- index.css
+```
+
+---
+
+## Run Locally
+
+```bash
+npm install
+npm run dev
+```
+
+Сборка production-версии:
+
+```bash
+npm run build
+```
+
+Предпросмотр production-сборки:
+
+```bash
+npm run preview
+```
+
+---
+
+## Technologies
+
+- React 19
+- Vite
+- JavaScript (ES Modules)
+- HTML5 Canvas
+- CSS
+
+---
+
+## Notes
+
+Проект ориентирован на быстрые эксперименты с параметрами трафика: можно наблюдать, как меняются пробки, скорость потока, задержки на перекрёстке и влияние случайных событий вроде поломок машин.
