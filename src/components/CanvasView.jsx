@@ -40,12 +40,6 @@ function CanvasView({ simulation, onStatisticsChange, onRunningChange }) {
 
   return (
     <div className="canvasCard">
-      <div className="canvasToolbar">
-        <div>
-          <strong>Поле симуляции</strong>
-          <span> Увеличенная карта для длинных очередей и более плотных потоков.</span>
-        </div>
-      </div>
       <div className="canvasViewport">
         <canvas
           ref={canvasRef}
