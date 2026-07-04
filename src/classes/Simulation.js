@@ -354,7 +354,6 @@ class Simulation {
 
   // Removes a completed vehicle from the world and records its trip duration.
   finishVehicle(vehicle) {
-    vehicle.finished = true
     this.completedTrips.push(vehicle.travelTime)
     this.vehicles = this.vehicles.filter(({ id }) => id !== vehicle.id)
   }

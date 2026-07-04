@@ -15,11 +15,9 @@ class Vehicle {
     maxSpeed,
     direction,
     currentRoad,
-    destination,
     waitingTime = 0,
     route,
     color,
-    spawnedAt = 0,
   }) {
     this.id = id
     this.x = x
@@ -28,17 +26,14 @@ class Vehicle {
     this.maxSpeed = maxSpeed
     this.direction = direction
     this.currentRoad = currentRoad
-    this.destination = destination
     this.waitingTime = waitingTime
     this.route = route
     this.color = color
-    this.spawnedAt = spawnedAt
     this.travelTime = 0
     this.progress = 0
     this.routeIndex = 0
     this.length = VEHICLE_LENGTH
     this.width = VEHICLE_WIDTH
-    this.finished = false
     this.safeGap = SAFE_GAP + randomRange(0, 10)
     this.isBroken = false
     this.repairTicksRemaining = 0

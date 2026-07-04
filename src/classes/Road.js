@@ -6,25 +6,19 @@ class Road {
     id,
     startPoint,
     endPoint,
-    lanes,
     speedLimit,
     controlledBy = null,
     entry = false,
     exit = false,
-    axis = 'vertical',
-    label = '',
   }) {
     this.id = id
     this.startPoint = startPoint
     this.endPoint = endPoint
-    this.lanes = lanes
     this.speedLimit = speedLimit
     this.vehicles = []
     this.controlledBy = controlledBy
     this.entry = entry
     this.exit = exit
-    this.axis = axis
-    this.label = label
     this.length = distanceBetween(startPoint, endPoint)
     this.directionVector = normalizeVector({
       x: endPoint.x - startPoint.x,
@@ -60,16 +54,6 @@ class Road {
     }
 
     return this.vehicles[index - 1]
-  }
-
-  // Returns the first vehicle close to the beginning of the road.
-  getVehicleNearStart(progressThreshold = 0.12) {
-    this.updateTraffic()
-    return (
-      [...this.vehicles]
-        .reverse()
-        .find((vehicle) => vehicle.progress <= progressThreshold) ?? null
-    )
   }
 
   // Returns the progress value where vehicles should stop for a red light.

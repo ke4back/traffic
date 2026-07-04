@@ -5,8 +5,6 @@ class TrafficLight {
     id,
     x,
     y,
-    axis,
-    title,
     initialState = TRAFFIC_LIGHT_STATES.RED,
     greenTime = 8,
     yellowTime = YELLOW_TIME,
@@ -15,8 +13,6 @@ class TrafficLight {
     this.id = id
     this.x = x
     this.y = y
-    this.axis = axis
-    this.title = title
     this.state = initialState
     this.greenTime = greenTime
     this.yellowTime = yellowTime
@@ -70,11 +66,6 @@ class TrafficLight {
 
     this.state = TRAFFIC_LIGHT_STATES.GREEN
     this.timer = this.greenTime
-  }
-
-  // Returns whether vehicles facing this light may currently pass.
-  allowsTraffic() {
-    return this.state === TRAFFIC_LIGHT_STATES.GREEN
   }
 
   // Renders a compact traffic light head with the active lamp highlighted.
