@@ -17,6 +17,14 @@ import {
 import { clamp, deepMerge, pickRandom, pickWeightedRandom, randomRange } from '../utils/helpers'
 
 const INTERSECTION_COOLDOWN_TICKS = 32
+const INITIAL_STATISTICS = {
+  activeVehicles: 0,
+  averageSpeed: 0,
+  averageWaitingTime: 0,
+  jamVehicles: 0,
+  averageTripTime: 0,
+  completedRoutes: 0,
+}
 
 class Simulation {
   constructor(controls = DEFAULT_CONTROLS) {
@@ -26,14 +34,7 @@ class Simulation {
     this.vehicles = []
     this.trafficLights = []
     this.intersections = []
-    this.statistics = {
-      activeVehicles: 0,
-      averageSpeed: 0,
-      averageWaitingTime: 0,
-      jamVehicles: 0,
-      averageTripTime: 0,
-      completedRoutes: 0,
-    }
+    this.statistics = { ...INITIAL_STATISTICS }
     this.running = false
     this.vehicleCounter = 0
     this.completedTrips = []
@@ -88,14 +89,7 @@ class Simulation {
     this.vehicles = []
     this.completedTrips = []
     this.intersectionCooldownTicks = 0
-    this.statistics = {
-      activeVehicles: 0,
-      averageSpeed: 0,
-      averageWaitingTime: 0,
-      jamVehicles: 0,
-      averageTripTime: 0,
-      completedRoutes: 0,
-    }
+    this.statistics = { ...INITIAL_STATISTICS }
     this.controls = deepMerge(DEFAULT_CONTROLS, nextControls)
     this.buildMap()
     this.applyControls(this.controls)
@@ -225,9 +219,7 @@ class Simulation {
 
   // Advances all active vehicles and transfers them between route segments when needed.
   updateVehicles(deltaTime) {
-    if (this.intersectionCooldownTicks > 0) {
-      this.intersectionCooldownTicks -= 1
-    }
+    this.intersectionCooldownTicks = Math.max(0, this.intersectionCooldownTicks - 1)
 
     this.roads.forEach((road) => road.updateTraffic())
 
@@ -240,7 +232,7 @@ class Simulation {
     })
 
     vehiclesSnapshot.forEach((vehicle) => {
-      const road = vehicle.currentRoad
+      const { currentRoad: road } = vehicle
       const vehicleAhead = road.getVehicleAhead(vehicle)
       const light = road.controlledBy ? this.getTrafficLightById(road.controlledBy) : null
       const lightState = light ? light.state : TRAFFIC_LIGHT_STATES.GREEN
@@ -309,12 +301,10 @@ class Simulation {
   // Moves a vehicle to the next road in its route or marks the trip as complete.
   advanceVehicle(vehicle) {
     const currentRoad = vehicle.currentRoad
+    const stopProgress = currentRoad.getStopProgress(vehicle)
 
     if (!this.canVehicleEnterNextRoad(vehicle)) {
-      vehicle.progress = Math.min(
-        vehicle.progress,
-        currentRoad.getStopProgress(vehicle),
-      )
+      vehicle.progress = Math.min(vehicle.progress, stopProgress)
       const point = currentRoad.getPointAt(vehicle.progress)
       vehicle.x = point.x
       vehicle.y = point.y

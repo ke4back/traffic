@@ -80,7 +80,7 @@ class Road {
 
   // Converts a normalized progress value to a world position on the road.
   getPointAt(progress) {
-    const clampedProgress = Math.min(Math.max(progress, 0), 1)
+    const clampedProgress = clamp(progress, 0, 1)
 
     return {
       x: this.startPoint.x + (this.endPoint.x - this.startPoint.x) * clampedProgress,
