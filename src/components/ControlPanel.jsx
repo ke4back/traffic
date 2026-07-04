@@ -79,9 +79,9 @@ function ControlPanel({
 
       <div className="controlGroup">
         <div className="controlLabelRow">
-          <label htmlFor="breakdownChance">Вероятность поломки машины</label>
+          <label htmlFor="breakdownChance">Вероятность поломки (в тик)</label>
           <span className="controlValue">
-            {(controls.breakdownChance * 100).toFixed(2)}%
+            {(controls.breakdownChance * 100).toFixed(3)}%
           </span>
         </div>
         <input
