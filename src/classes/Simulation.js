@@ -287,10 +287,6 @@ class Simulation {
 
   // Returns whether the next route segment has enough room to accept this vehicle.
   canVehicleEnterNextRoad(vehicle) {
-    if (vehicle.currentRoad.controlledBy && this.intersectionCooldownTicks > 0) {
-      return false
-    }
-
     if (vehicle.routeIndex >= vehicle.route.length - 1) {
       return true
     }
