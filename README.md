@@ -104,6 +104,11 @@ npm run build
 npm run preview
 ```
 
+## Deploy
+
+GitHub Pages deployment is configured through the workflow in `.github/workflows/deploy-pages.yml`.
+After each push to `main`, GitHub Actions rebuilds the app and publishes the current `dist` automatically.
+
 ---
 
 ## Technologies
