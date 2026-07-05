@@ -101,13 +101,6 @@ class Vehicle {
     )
     const shouldStopAtLine = distanceToStopLine <= this.safeGap
 
-    if (lightState && lightState !== 'green') {
-      if (shouldStopAtLine) {
-        targetSpeed = 0
-        maxProgress = Math.min(maxProgress, stopProgress)
-      }
-    }
-
     if (vehicleAhead) {
       const gap = Math.max(
         0,
@@ -128,10 +121,19 @@ class Vehicle {
       }
     }
 
-    if (!canExitRoad) {
+    if (lightState && lightState !== 'green') {
+      maxProgress = Math.min(maxProgress, stopProgress)
+
       if (shouldStopAtLine) {
         targetSpeed = 0
-        maxProgress = Math.min(maxProgress, stopProgress)
+      }
+    }
+
+    if (!canExitRoad) {
+      maxProgress = Math.min(maxProgress, stopProgress)
+
+      if (shouldStopAtLine) {
+        targetSpeed = 0
       }
     }
 

@@ -6,13 +6,10 @@ import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
   DEFAULT_CONTROLS,
-  INTERSECTION_BOUNDS,
-  LIGHT_DEFINITIONS,
-  ROAD_DEFINITIONS,
-  ROUTE_OPTIONS,
   TRAFFIC_LIGHT_STATES,
   VEHICLE_COLORS,
   YELLOW_TIME,
+  getMapDefinition,
 } from '../utils/constants'
 import { clamp, deepMerge, pickRandom, pickWeightedRandom, randomRange } from '../utils/helpers'
 
@@ -41,14 +38,15 @@ class Simulation {
     this.spawnAccumulator = 0
     this.intersectionCooldownTicks = 0
     this.controls = deepMerge(DEFAULT_CONTROLS, controls)
+    this.mapDefinition = getMapDefinition(this.controls.mapId)
     this.buildMap()
     this.applyControls(this.controls)
   }
 
-  // Creates the road network, central intersection, and traffic lights.
   buildMap() {
-    this.roads = ROAD_DEFINITIONS.map((definition) => new Road(definition))
-    this.trafficLights = LIGHT_DEFINITIONS.map((definition) => {
+    this.mapDefinition = getMapDefinition(this.controls.mapId)
+    this.roads = this.mapDefinition.roads.map((definition) => new Road(definition))
+    this.trafficLights = this.mapDefinition.lights.map((definition) => {
       const timings = this.controls.lightTimings[definition.id]
 
       return new TrafficLight({
@@ -58,30 +56,31 @@ class Simulation {
         redTime: timings.redTime,
       })
     })
-    this.intersections = [new Intersection(INTERSECTION_BOUNDS)]
+    this.intersections = this.mapDefinition.intersections.map(
+      (bounds) => new Intersection(bounds),
+    )
   }
 
-  // Applies UI controls to the model without recreating the entire simulation.
   applyControls(controls) {
     this.controls = deepMerge(this.controls, controls)
+    this.mapDefinition = getMapDefinition(this.controls.mapId)
 
     this.trafficLights.forEach((light) => {
       const timings = this.controls.lightTimings[light.id]
-      light.setDurations(timings.greenTime, YELLOW_TIME, timings.redTime)
+      if (timings) {
+        light.setDurations(timings.greenTime, YELLOW_TIME, timings.redTime)
+      }
     })
   }
 
-  // Starts advancing simulation time and enabling vehicle updates.
   start() {
     this.running = true
   }
 
-  // Stops the simulation loop while keeping the current scene state visible.
   stop() {
     this.running = false
   }
 
-  // Rebuilds the world state and clears accumulated vehicles and statistics.
   reset(nextControls = this.controls) {
     this.running = false
     this.vehicleCounter = 0
@@ -95,7 +94,6 @@ class Simulation {
     this.applyControls(this.controls)
   }
 
-  // Advances lights, spawns vehicles, updates cars, and refreshes statistics.
   update(deltaTime) {
     if (!this.running) {
       return
@@ -111,16 +109,12 @@ class Simulation {
     this.calculateStatistics()
   }
 
-  // Spawns new vehicles until the active count approaches the configured target.
   maybeSpawnVehicles() {
     const targetCount = this.controls.vehicleTarget
-    const fillRatio = targetCount / 50
+    const fillRatio = targetCount / 100
     const spawnInterval = clamp(0.7 - fillRatio * 0.45, 0.08, 0.7)
 
-    while (
-      this.spawnAccumulator >= spawnInterval &&
-      this.vehicles.length < targetCount
-    ) {
+    while (this.spawnAccumulator >= spawnInterval && this.vehicles.length < targetCount) {
       this.spawnAccumulator -= spawnInterval
 
       if (!this.spawnVehicle()) {
@@ -129,7 +123,6 @@ class Simulation {
     }
   }
 
-  // Creates a vehicle on a weighted random entry road when there is enough free space to enter.
   spawnVehicle() {
     const entryRoads = this.roads.filter((road) => road.entry)
     const attemptedRoadIds = new Set()
@@ -146,15 +139,13 @@ class Simulation {
 
       attemptedRoadIds.add(road.id)
 
-      const leadVehicle = this.getVehicleNearRoadStart(road, 48)
-
-      if (leadVehicle) {
+      if (this.getVehicleNearRoadStart(road, 48)) {
         continue
       }
 
-      const destination = pickRandom(ROUTE_OPTIONS[road.id] ?? [])
+      const routeTail = pickRandom(this.mapDefinition.routeOptions[road.id] ?? [])
 
-      if (!destination) {
+      if (!routeTail?.length) {
         continue
       }
 
@@ -167,7 +158,7 @@ class Simulation {
         direction: road.directionVector,
         currentRoad: road,
         waitingTime: 0,
-        route: [road.id, destination],
+        route: [road.id, ...routeTail],
         color: pickRandom(VEHICLE_COLORS) ?? '#495057',
       })
 
@@ -180,7 +171,6 @@ class Simulation {
     return false
   }
 
-  // Computes up-to-date aggregate metrics for the statistics panel.
   calculateStatistics() {
     const activeVehicles = this.vehicles.length
     const completedRoutes = this.completedTrips.length
@@ -212,12 +202,10 @@ class Simulation {
     return { ...this.statistics }
   }
 
-  // Updates every light independently according to its own configuration.
   updateTrafficLights(deltaTime) {
     this.trafficLights.forEach((light) => light.update(deltaTime))
   }
 
-  // Advances all active vehicles and transfers them between route segments when needed.
   updateVehicles(deltaTime) {
     this.intersectionCooldownTicks = Math.max(0, this.intersectionCooldownTicks - 1)
 
@@ -251,7 +239,6 @@ class Simulation {
     })
   }
 
-  // Transfers queued vehicles from the stop line as soon as the light allows it.
   shouldAdvanceVehicle(vehicle, lightState, canExitRoad) {
     if (vehicle.progress >= 1) {
       return true
@@ -273,7 +260,6 @@ class Simulation {
     return vehicle.progress >= stopProgress - 0.0001
   }
 
-  // Returns whether the next route segment has enough room to accept this vehicle.
   canVehicleEnterNextRoad(vehicle) {
     if (vehicle.routeIndex >= vehicle.route.length - 1) {
       return true
@@ -289,7 +275,6 @@ class Simulation {
     return !roadStartVehicle
   }
 
-  // Checks whether a road entry zone is occupied using a fixed world distance.
   getVehicleNearRoadStart(road, clearanceDistance) {
     return (
       road.vehicles.find(
@@ -298,7 +283,6 @@ class Simulation {
     )
   }
 
-  // Moves a vehicle to the next road in its route or marks the trip as complete.
   advanceVehicle(vehicle) {
     const currentRoad = vehicle.currentRoad
     const stopProgress = currentRoad.getStopProgress(vehicle)
@@ -337,23 +321,23 @@ class Simulation {
     this.finishVehicle(vehicle)
   }
 
-  // Removes a completed vehicle from the world and records its trip duration.
   finishVehicle(vehicle) {
     this.completedTrips.push(vehicle.travelTime)
     this.vehicles = this.vehicles.filter(({ id }) => id !== vehicle.id)
   }
 
-  // Returns the road instance that matches the provided identifier.
   getRoadById(id) {
     return this.roads.find((road) => road.id === id) ?? null
   }
 
-  // Returns the traffic light instance that matches the provided identifier.
   getTrafficLightById(id) {
     return this.trafficLights.find((light) => light.id === id) ?? null
   }
 
-  // Draws the full city scene including roads, lights, and active vehicles.
+  getTrafficLightAtPoint(x, y) {
+    return this.trafficLights.find((light) => light.containsPoint(x, y)) ?? null
+  }
+
   draw(ctx) {
     ctx.clearRect(0, 0, this.width, this.height)
 
@@ -365,7 +349,6 @@ class Simulation {
     this.vehicles.forEach((vehicle) => vehicle.draw(ctx))
   }
 
-  // Draws a simple green background with a light repeating tile pattern.
   drawBackground(ctx) {
     ctx.save()
     ctx.fillStyle = '#d8ead0'
@@ -381,37 +364,13 @@ class Simulation {
     ctx.restore()
   }
 
-  // Writes direction labels and live flow intensities onto the map.
   drawRoadLabels(ctx) {
-    const labelConfig = [
-      {
-        text: `Северный поток x${this.controls.trafficRates.north_in.toFixed(1)}`,
-        x: 450,
-        y: 70,
-      },
-      {
-        text: `Южный поток x${this.controls.trafficRates.south_in.toFixed(1)}`,
-        x: 500,
-        y: 930,
-      },
-      {
-        text: `Западный поток x${this.controls.trafficRates.west_in.toFixed(1)}`,
-        x: 52,
-        y: 400,
-      },
-      {
-        text: `Восточный поток x${this.controls.trafficRates.east_in.toFixed(1)}`,
-        x: 1300,
-        y: 400,
-      },
-    ]
-
     ctx.save()
     ctx.fillStyle = 'rgba(18, 33, 46, 0.84)'
     ctx.font = '600 18px Trebuchet MS'
 
-    labelConfig.forEach(({ text, x, y }) => {
-      ctx.fillText(text, x, y)
+    this.mapDefinition.trafficRateMeta.forEach(({ id, label, x, y }) => {
+      ctx.fillText(`${label} x${(this.controls.trafficRates[id] ?? 0).toFixed(1)}`, x, y)
     })
 
     ctx.restore()

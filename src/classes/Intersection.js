@@ -1,7 +1,5 @@
-import { INTERSECTION_BOUNDS } from '../utils/constants'
-
 class Intersection {
-  constructor(bounds = INTERSECTION_BOUNDS) {
+  constructor(bounds) {
     this.bounds = bounds
   }
 

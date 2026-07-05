@@ -160,9 +160,28 @@
   color: #fff9f2;
 }
 
+.ghostButton {
+  border: 1px solid rgba(39, 60, 76, 0.16);
+  background: rgba(255, 255, 255, 0.82);
+  color: #20313f;
+  border-radius: 12px;
+  padding: 8px 12px;
+  font: inherit;
+  cursor: pointer;
+}
+
 .fullWidthButton {
   grid-column: 1 / -1;
   width: 100%;
+}
+
+.panelSelect {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid rgba(39, 60, 76, 0.16);
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #20313f;
 }
 
 .controlGroup {
@@ -247,6 +266,11 @@
   border-radius: 14px;
   background: rgba(255, 252, 247, 0.82);
   border: 1px solid rgba(39, 60, 76, 0.08);
+}
+
+.lightSettingsCard {
+  display: grid;
+  gap: 10px;
 }
 
 .lightCard h4 {

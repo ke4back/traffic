@@ -5,6 +5,7 @@ class TrafficLight {
     id,
     x,
     y,
+    label,
     initialState = TRAFFIC_LIGHT_STATES.RED,
     greenTime = 8,
     yellowTime = YELLOW_TIME,
@@ -13,6 +14,7 @@ class TrafficLight {
     this.id = id
     this.x = x
     this.y = y
+    this.label = label
     this.state = initialState
     this.greenTime = greenTime
     this.yellowTime = yellowTime
@@ -20,7 +22,6 @@ class TrafficLight {
     this.timer = this.getDurationForState(initialState)
   }
 
-  // Returns the configured duration for a specific traffic light state.
   getDurationForState(state) {
     if (state === TRAFFIC_LIGHT_STATES.GREEN) {
       return this.greenTime
@@ -33,7 +34,6 @@ class TrafficLight {
     return this.redTime
   }
 
-  // Applies fresh timings while preserving the current phase of the light.
   setDurations(greenTime, yellowTime, redTime) {
     this.greenTime = greenTime
     this.yellowTime = yellowTime
@@ -41,7 +41,6 @@ class TrafficLight {
     this.timer = Math.min(this.timer, this.getDurationForState(this.state))
   }
 
-  // Advances the light timer and flips to the next state when the timer expires.
   update(deltaTime) {
     this.timer -= deltaTime
 
@@ -50,7 +49,6 @@ class TrafficLight {
     }
   }
 
-  // Switches the traffic light to the next phase in the red-yellow-green cycle.
   switchState() {
     if (this.state === TRAFFIC_LIGHT_STATES.GREEN) {
       this.state = TRAFFIC_LIGHT_STATES.YELLOW
@@ -68,7 +66,10 @@ class TrafficLight {
     this.timer = this.greenTime
   }
 
-  // Renders a compact traffic light head with the active lamp highlighted.
+  containsPoint(x, y) {
+    return Math.abs(x - this.x) <= 14 && Math.abs(y - this.y) <= 20
+  }
+
   draw(ctx) {
     const lampColors = {
       [TRAFFIC_LIGHT_STATES.RED]: '#da5252',
