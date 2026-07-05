@@ -107,7 +107,8 @@ npm run preview
 ## Deploy
 
 GitHub Pages deployment is configured through the workflow in `.github/workflows/deploy-pages.yml`.
-After each push to `main`, GitHub Actions rebuilds the app and publishes the current `dist` automatically.
+After each push to `main`, GitHub Actions rebuilds the app and publishes the current `dist` to the `gh-pages` branch automatically.
+In the repository settings for GitHub Pages, choose `Deploy from a branch` and set the branch to `gh-pages` with the `/ (root)` folder.
 
 ---
 
