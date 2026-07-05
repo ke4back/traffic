@@ -213,8 +213,16 @@
   width: 100%;
   height: 10px;
   border-radius: 999px;
-  background: linear-gradient(90deg, #99d98c, #ffcf66, #f28482);
+  background: #d9e3e8;
+  border: 1px solid #5c7283;
   outline: none;
+}
+
+.slider::-webkit-slider-runnable-track {
+  height: 10px;
+  border-radius: 999px;
+  background: #d9e3e8;
+  border: 1px solid #5c7283;
 }
 
 .slider::-webkit-slider-thumb {
@@ -225,6 +233,14 @@
   background: #172633;
   border: 2px solid #fffdf8;
   box-shadow: 0 6px 16px rgba(22, 38, 51, 0.24);
+  margin-top: -5px;
+}
+
+.slider::-moz-range-track {
+  height: 10px;
+  border-radius: 999px;
+  background: #d9e3e8;
+  border: 1px solid #5c7283;
 }
 
 .slider::-moz-range-thumb {

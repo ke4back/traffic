@@ -88,7 +88,7 @@ class Road {
     }
   }
 
-  // Draws the road segment, asphalt, and dashed lane markings.
+  // Draws the road segment asphalt without lane markings.
   draw(ctx) {
     ctx.save()
     ctx.lineCap = 'round'
@@ -99,17 +99,6 @@ class Road {
     ctx.moveTo(this.startPoint.x, this.startPoint.y)
     ctx.lineTo(this.endPoint.x, this.endPoint.y)
     ctx.stroke()
-
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.72)'
-    ctx.lineWidth = 2
-    ctx.setLineDash([14, 16])
-
-    ctx.beginPath()
-    ctx.moveTo(this.startPoint.x, this.startPoint.y)
-    ctx.lineTo(this.endPoint.x, this.endPoint.y)
-    ctx.stroke()
-
-    ctx.setLineDash([])
     ctx.restore()
   }
 }
