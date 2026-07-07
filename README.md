@@ -106,24 +106,13 @@ npm run preview
 
 ## Deploy
 
-The production deployment path in this repository is GitHub Actions from `.github/workflows/deploy-pages.yml`.
-
-Use:
+Для публикации проекта в `gh-pages` используйте:
 
 ```bash
 npm run deploy
-git push origin main
 ```
 
-`npm run deploy` builds the app and checks that you are really ready to publish. The actual site update happens only after the push to `main`, because GitHub Actions rebuilds the app and publishes it to `gh-pages`.
-
-If your GitHub Pages settings are configured to publish directly from the `gh-pages` branch and you want the old manual flow, use:
-
-```bash
-npm run deploy:pages
-```
-
-For the workflow above, GitHub Pages should serve the `gh-pages` branch from the `/ (root)` folder.
+GitHub Pages должен быть настроен на публикацию из ветки `gh-pages` из корня `/ (root)`.
 
 ---
 
